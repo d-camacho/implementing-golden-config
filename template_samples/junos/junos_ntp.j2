@@ -1,0 +1,18 @@
+{% if config_context.get("ntp") %}
+{% set ntp = config_context["ntp"] %}
+{# Optional global source address #}
+{% if ntp.get("source_address") %}
+set system ntp source-address {{ ntp["source_address"] }}
+{% endif %}
+
+{# NTP servers #}
+{% for server in ntp.get("servers", []) %}
+set system ntp server {{ server["ip"] }}{% if server.get("prefer") %} prefer{% endif %}{% if server.get("routing_instance") %} routing-instance {{ server["routing_instance"] }}{% endif %}{% if server.get("version") %} version {{ server["version"] }}{% endif %}
+{% endfor %}
+
+{# Optional auth/trust controls #}
+{% if ntp.get("authentication_key_id") and ntp.get("authentication_key_value") %}
+set system ntp authentication-key {{ ntp["authentication_key_id"] }} type md5 value {{ ntp["authentication_key_value"] }}
+set system ntp trusted-key {{ ntp["authentication_key_id"] }}
+{% endif %}
+{% endif %}

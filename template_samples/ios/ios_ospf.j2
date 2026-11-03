@@ -1,0 +1,18 @@
+{% if config_context.get("ospf") %}
+{% set ospf = config_context["ospf"] %}
+{% if ospf.get("process_id") %}
+router ospf {{ ospf["process_id"] }}
+{% if ospf.get("router_id") %}
+ router-id {{ ospf["router_id"] }}
+{% endif %}
+{% if ospf.get("default_information_originate") %}
+ default-information originate
+{% endif %}
+{% for area in ospf.get("areas", []) %}
+{% for net in area.get("networks", []) %}
+ network {{ net["network"] }} {{ net["wildcard_mask"] }} area {{ area["area"] }}
+{% endfor %}
+{% endfor %}
+!
+{% endif %}
+{% endif %}

@@ -1,0 +1,22 @@
+---
+_metadata:
+  name: "Access Switch Context"
+  weight: 2000
+  description: "Config Context for all Access Switches"
+  is_active: true
+
+acl_roles:
+  - name: "ACCESS-SWITCH"
+    type: "standard"
+    entries:
+      - sequence: 10
+        action: "permit"
+        src:
+          type: "host"
+          host: "25.25.31.229"
+      - sequence: 20
+        action: "permit"
+        src:
+          type: "network"
+          address: "25.25.28.232"
+          wildcard: "0.0.0.7"

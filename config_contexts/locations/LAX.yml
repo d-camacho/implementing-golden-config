@@ -1,0 +1,51 @@
+---
+_metadata:
+  name: "LAX Config Context"
+  weight: 2000
+  description: "Config Context for all LAX Devices"
+  is_active: true
+  
+
+ntp:
+  servers:
+    - ip: "192.168.1.1"
+      prefer: true
+    - ip: "172.16.3.33"
+
+snmp:
+  communities:
+    - name: "lax-snmp-ro"
+      ro: true
+  location: "Los Angeles, CA - LAX DC1"
+  contact: "LAX Network Operations <lax-noc@demo.local>"
+  chassis_id: "LAX-DC1-CHASSIS-01"
+
+acl_regional:
+  - name: "MULTICAST-FILTER"
+    type: "extended"
+    entries:
+      - sequence: 10
+        action: "permit"
+        protocol: "ip"
+        src:
+          type: "any"
+        dst:
+          type: "network"
+          address: "239.10.1.0"
+          wildcard: "0.0.0.255"
+      - sequence: 20
+        action: "deny"
+        protocol: "ip"
+        src:
+          type: "any"
+        dst:
+          type: "network"
+          address: "224.10.1.0"
+          wildcard: "0.0.0.255"
+      - sequence: 30
+        action: "permit"
+        protocol: "ip"
+        src:
+          type: "any"
+        dst:
+          type: "any"

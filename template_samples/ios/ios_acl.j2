@@ -1,0 +1,51 @@
+{% set acls = config_context.get("acl_global", []) + config_context.get("acl_regional", []) + config_context.get("acl_roles", []) %}
+{% if acls %}
+{#
+  Macros — address and port formatting helpers used by both standard and extended ACEs
+  This will keep you from doing if/elif/else for every port, host, destination, subnets, etc.
+#}
+{%- macro fmt_addr(addr) -%}
+{%- if addr["type"] == "any" -%}any
+{%- elif addr["type"] == "host" -%}host {{ addr["host"] }}
+{%- elif addr["type"] == "network" -%}{{ addr["address"] }} {{ addr["wildcard"] }}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro fmt_port(port_obj) -%}
+{%- if port_obj["operator"] == "range" -%}range {{ port_obj["port"][0] }} {{ port_obj["port"][1] }}
+{%- else -%}{{ port_obj["operator"] }} {{ port_obj["port"] }}
+{%- endif -%}
+{%- endmacro -%}
+
+{# -------- ACCESS CONTROL LISTS -------- #}
+{% for acl in acls %}
+{% if acl.get("numbered") %}
+{# Legacy numbered format: access-list NUMBER {action} ... (no grouped header) #}
+{% for entry in acl["entries"] %}
+{% if entry["action"] == "remark" %}
+access-list {{ acl["name"] }} remark {{ entry["text"] }}
+{% elif acl["type"] == "standard" %}
+access-list {{ acl["name"] }} {{ entry["action"] }} {{ fmt_addr(entry["src"]) }}{% if entry.get("log") %} log{% endif %}{{ "" }}
+{% elif acl["type"] == "extended" %}
+access-list {{ acl["name"] }} {{ entry["action"] }} {{ entry["protocol"] }} {{ fmt_addr(entry["src"]) }}{% if entry["src"].get("port") %} {{ fmt_port(entry["src"]["port"]) }}{% endif %} {{ fmt_addr(entry["dst"]) }}{% if entry["dst"].get("port") %} {{ fmt_port(entry["dst"]["port"]) }}{% endif %}{% if entry.get("established") %} established{% endif %}{% if entry.get("log") %} log{% endif %}{{ "" }}
+{% endif %}
+{% endfor %}
+{% else %}
+{# Modern named / numeric-name format: ip access-list {type} {name} #}
+{% if acl["type"] == "standard" %}
+ip access-list standard {{ acl["name"] }}
+{% elif acl["type"] == "extended" %}
+ip access-list extended {{ acl["name"] }}
+{% endif %}
+{% for entry in acl["entries"] %}
+{% if entry["action"] == "remark" %}
+ {{ entry["sequence"] }} remark {{ entry["text"] }}
+{% elif acl["type"] == "standard" %}
+ {{ entry["sequence"] }} {{ entry["action"] }} {{ fmt_addr(entry["src"]) }}{% if entry.get("log") %} log{% endif %}{{ "" }}
+{% elif acl["type"] == "extended" %}
+ {{ entry["sequence"] }} {{ entry["action"] }} {{ entry["protocol"] }} {{ fmt_addr(entry["src"]) }}{% if entry["src"].get("port") %} {{ fmt_port(entry["src"]["port"]) }}{% endif %} {{ fmt_addr(entry["dst"]) }}{% if entry["dst"].get("port") %} {{ fmt_port(entry["dst"]["port"]) }}{% endif %}{% if entry.get("established") %} established{% endif %}{% if entry.get("log") %} log{% endif %}{{ "" }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}

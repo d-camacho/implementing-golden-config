@@ -1,0 +1,32 @@
+{% set snmp = config_context.get("snmp", config_context.get("snmp-server")) %}
+{% if snmp %}
+{% for view in snmp.get("views", []) %}
+snmp-server view {{ view["name"] }} {{ view["mib"] }} {{ view["action"] }}
+{% endfor %}
+{% for group in snmp.get("groups", []) %}
+snmp-server group {{ group["name"] }} {{ group["version"] }} {{ group["priv"] }} match {{ group["match"] }} read {{ group["read"] }} access {{ group["acl"] }}
+{% endfor %}
+{% for community in snmp.get("communities", []) %}
+{% if community.get("ro") %}
+snmp-server community {{ community["name"] }} RO
+{% elif community.get("rw") %}
+snmp-server community {{ community["name"] }} RW
+{% elif community.get("access") %}
+snmp-server community {{ community["name"] }} {{ community["access"] }}{% if community.get("acl") %} {{ community["acl"] }}{% endif %}
+{% else %}
+snmp-server community {{ community["name"] }}
+{% endif %}
+{% endfor %}
+{% if snmp.get("location") %}
+snmp-server location {{ snmp["location"] }}
+{% endif %}
+{% if snmp.get("contact") %}
+snmp-server contact {{ snmp["contact"] }}
+{% endif %}
+{% if snmp.get("chassis_id") %}
+snmp-server chassis-id {{ snmp["chassis_id"] }}
+{% endif %}
+{% for trap in snmp.get("traps", []) %}
+snmp-server enable traps {{ trap }}
+{% endfor %}
+{% endif %}

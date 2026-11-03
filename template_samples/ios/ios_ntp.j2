@@ -1,0 +1,7 @@
+{% if config_context.get("ntp") %}
+{% set ntp = config_context["ntp"] %}
+{% for server in ntp.get("servers", []) %}
+ntp server {{ server["ip"] }}{% if server.get("vrf") %} use-vrf {{ server["vrf"] }}{% endif %}{% if server.get("prefer") %} prefer{% endif %}
+
+{% endfor %}
+{% endif %}

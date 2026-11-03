@@ -1,0 +1,22 @@
+---
+_metadata:
+  name: "Core Switch Context"
+  weight: 2000
+  description: "Config Context for all Core Switches"
+  is_active: true
+
+acl_roles:
+  - name: "CORE-SWITCH"
+    type: "standard"
+    entries:
+      - sequence: 10
+        action: "permit"
+        src:
+          type: "host"
+          host: "35.35.35.224"
+      - sequence: 20
+        action: "permit"
+        src:
+          type: "network"
+          address: "35.35.35.232"
+          wildcard: "0.0.0.7"

@@ -1,0 +1,32 @@
+{% if config_context.get("bgp") %}
+{% set bgp = config_context["bgp"] %}
+{% if bgp.get("asn") %}
+router bgp {{ bgp["asn"] }}
+{% if bgp.get("log_neighbor_changes") %}
+ bgp log-neighbor-changes
+{% endif %}
+{% for neighbor in bgp.get("neighbors", []) %}
+ neighbor {{ neighbor["ip"] }} remote-as {{ neighbor["remote_as"] }}
+{% if neighbor.get("description") %}
+ neighbor {{ neighbor["ip"] }} description {{ neighbor["description"] }}
+{% endif %}
+{% endfor %}
+{% for af in bgp.get("address_families", []) %}
+{% if af.get("name") == "ipv4" %}
+ address-family ipv4
+{% else %}
+ address-family {{ af["name"] }}
+{% endif %}
+{% for net in af.get("networks", []) %}
+  network {{ net["network"] }} mask {{ net["mask"] }}
+{% endfor %}
+{% for af_neighbor in af.get("neighbors", []) %}
+{% if af_neighbor.get("activate") %}
+  neighbor {{ af_neighbor["ip"] }} activate
+{% endif %}
+{% endfor %}
+ exit-address-family
+{% endfor %}
+!
+{% endif %}
+{% endif %}

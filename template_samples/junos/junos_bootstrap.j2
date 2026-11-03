@@ -1,0 +1,40 @@
+{% if config_context.get("bootstrap") %}
+{% set bootstrap = config_context.get("bootstrap") %}
+{% set mgmt_interface = bootstrap.get("mgmt_interface", "fxp0") %}
+{% set mgmt_unit = bootstrap.get("mgmt_unit", 0) %}
+{% set default_gateway = bootstrap.get("default_gateway", config_context.get("site_mgmt_gateway")) %}
+
+{# Common bootstrap defaults #}
+set system processes dhcp-service disable
+delete interfaces {{ mgmt_interface }} unit {{ mgmt_unit }} family inet dhcp
+set system services ssh
+
+{# Optional root SSH behavior (default true during bootstrap) #}
+{% if bootstrap.get("allow_root_ssh", true) %}
+set system services ssh root-login allow
+{% endif %}
+
+{# Optional hostname #}
+{% if bootstrap.get("hostname") %}
+set system host-name {{ bootstrap["hostname"] }}
+{% endif %}
+
+{# Optional management default route #}
+{% if default_gateway %}
+set routing-options static route 0.0.0.0/0 next-hop {{ default_gateway }} no-readvertise
+{% endif %}
+
+{# Optional DNS servers #}
+{% for dns_server in bootstrap.get("name_servers", []) %}
+set system name-server {{ dns_server }}
+{% endfor %}
+
+{# Optional NTP servers #}
+{% for ntp_server in bootstrap.get("ntp_servers", []) %}
+set system ntp server {{ ntp_server }}
+{% endfor %}
+
+{# Optional root password hash (recommended over plaintext) #}
+{% if bootstrap.get("root_password_hash") %}
+set system root-authentication encrypted-password "{{ bootstrap["root_password_hash"] }}"
+{% endif %}

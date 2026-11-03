@@ -1,0 +1,76 @@
+---
+_metadata:
+  name: "NB Demo Global Context"
+  weight: 1000
+  description: "Config context that applies to all demo devices"
+  is_active: true
+
+
+banner:
+  login: |
+    Unauthorized access is prohibited.
+    This system may be monitored for security and operational purposes.
+
+line_vty:
+  range: "0 4"
+  access_class: "SSH-MGMT-ACL"
+  privilege: 15
+  login: "local"
+  transport_input: "ssh"
+  transport_output: "ssh"
+
+acl_global:
+  - name: "SSH-MGMT-ACL"
+    type: "standard"
+    entries:
+      - sequence: 10
+        action: "permit"
+        src:
+          type: "network"
+          address: "192.168.1.0"
+          wildcard: "0.0.0.255"
+      - sequence: 20
+        action: "permit"
+        src:
+          type: "network"
+          address: "172.16.1.0"
+          wildcard: "0.0.0.255"
+      - sequence: 30
+        action: "deny"
+        src:
+          type: "any"
+        log: true
+
+snmp-server:
+  groups:
+    - name: "TEST6"
+      version: "v3"
+      priv: "priv"
+      match: "prefix"
+      read: "TEST7"
+      acl: 2
+    - name: "TEST8"
+      version: "v3"
+      priv: "priv"
+      match: "prefix"
+      read: "TEST7"
+      acl: 2
+  views:
+    - name: "TEST7"
+      mib: "internet"
+      action: "included"
+    - name: "TEST7"
+      mib: "system"
+      action: "included"
+    - name: "TEST7"
+      mib: "interfaces"
+      action: "included"
+    - name: "TEST7"
+      mib: "chassis"
+      action: "included"
+  communities:
+    - name: "CORP-SNMP-RO"
+      access: "RO"
+      acl: 2
+  traps:
+    - "license"

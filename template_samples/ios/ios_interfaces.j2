@@ -1,0 +1,35 @@
+{% if all_interfaces %}
+{% for intf in all_interfaces %}
+{% if not intf.get("mgmt_only") %}
+interface {{ intf["name"] }}
+{% if intf.get("description") %}
+ description {{ intf["description"] }}
+{% endif %}
+{% if intf.get("vrf") %}
+ vrf forwarding {{ intf["vrf"]["name"] }}
+{% endif %}
+{% set mode = (intf.get("mode") or "") | lower %}
+{% if mode == "access" %}
+{% if intf.get("untagged_vlan") %}
+ switchport access vlan {{ intf["untagged_vlan"]["vid"] }}
+{% endif %}
+ switchport mode access
+{% elif "tagged" in mode or mode == "trunk" %}
+ switchport mode trunk
+{% if intf.get("tagged_vlans") %}
+ switchport trunk allowed vlan {{ intf["tagged_vlans"] | map(attribute="vid") | join(",") }}
+{% endif %}
+{% endif %}
+{% set ipv4_list = intf.get("ip_addresses", []) | selectattr("ip_version", "equalto", 4) | map(attribute="address") | list %}
+{% set ipv4 = ipv4_list[0] if ipv4_list else none %}
+{% if ipv4 %}
+ no switchport
+ ip address {{ ipv4.split("/")[0] }} {{ ipv4.split("/")[1] | int | cidr_to_netmask }}
+{% endif %}
+{% if intf.get("enabled") == false %}
+ shutdown
+{% endif %}
+!
+{% endif %}
+{% endfor %}
+{% endif %}
